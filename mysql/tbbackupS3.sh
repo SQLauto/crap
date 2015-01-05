@@ -1,0 +1,5 @@
+#/bin/bash
+cd /mnt/terabitz
+mysqldump --events --routines --add-drop-database --skip-add-drop-table --create-options --no-data --default-character-set=utf8 --verbose --all-databases | gzip > /mnt/terabitz/Backups/EdgeMySQL/all_db_structure_`date '+%m-%d-%Y'`.sql.gz
+mysqldump --skip-triggers --no-create-db --no-create-info --skip-add-drop-table --hex-blob --default-character-set=utf8 --verbose --databases "tb_agentsite" "tb_agentsite_stats" "tb_atpneighborhood" "tb_brokeradmin_settings" "tb_cma" "tb_cmp" "tb_countydata" "tb_crm" "tb_dashboard" "tb_development_listing" "tb_drip" "tb_enhanced_listing" "tb_fasthome_blog" "tb_favourite" "tb_franchise" "tb_leads" | gzip > /mnt/terabitz/Backups/EdgeMySQL/all_db_data_`date '+%m-%d-%Y'`.sql.gz
+mysqldump --skip-triggers --no-create-db --no-create-info --skip-add-drop-table --hex-blob --default-character-set=utf8 --verbose "rets_transition" "id_lookup" | gzip > /mnt/terabitz/Backups/EdgeMySQL/lone_retsdb_table_`date '+%m-%d-%Y'`.sql.gz
