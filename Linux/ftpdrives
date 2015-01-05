@@ -1,0 +1,9 @@
+ #! /bin/sh
+case "$1" in
+start) /root/ftpdrives.sh ;;
+stop) /root/ftpdrivesu.sh ;;
+restart) /bin/sh $0 stop
+/bin/sh $0 start ;;
+*) echo "Usage: $0 {start|stop}"
+exit 1 ;;
+esac

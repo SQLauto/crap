@@ -1,0 +1,1 @@
+Get-ChildItem -Path C:\inetpub\logs\LogFiles -Recurse | ? {$_.PSIsContainer -eq $false -and $_.lastwritetime -lt (get-date).adddays(-15)} | Remove-Item -Force

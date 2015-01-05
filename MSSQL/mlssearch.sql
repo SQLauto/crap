@@ -1,0 +1,1 @@
+SELECT * FROM mls_az_azrmls.property_ptnf WHERE DATASOURCE LIKE '%svvar%';
