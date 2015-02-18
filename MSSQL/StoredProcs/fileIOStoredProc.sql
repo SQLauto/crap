@@ -1,3 +1,5 @@
+Create procedure FileIO
+AS
 SELECT
 	DB_NAME(s.database_id) AS [Database],
 	s.file_id AS [File ID],

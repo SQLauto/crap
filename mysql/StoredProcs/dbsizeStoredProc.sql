@@ -1,3 +1,6 @@
+Delimiter //
+Create procedure mysql.dbsize()
+begin
 SELECT DatabaseName,
   CONCAT(LPAD(FORMAT(SDSize/POWER(1024,pw),3),17,' '),' ',SUBSTR(' KMGTP',pw+1,1),'B') "Data Size",
   CONCAT(LPAD(FORMAT(SXSize/POWER(1024,pw),3),17,' '),' ',SUBSTR(' KMGTP',pw+1,1),'B') "Index Size",
@@ -18,3 +21,5 @@ FROM (
 ) AA,
 (SELECT 2 pw) BB
 ORDER BY (SDSize+SXSize);
+END //
+delimiter ;

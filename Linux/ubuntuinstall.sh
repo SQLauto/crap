@@ -15,7 +15,7 @@ service apache2 restart
 touch /var/www/html/info.php && echo '<?php phpinfo(); ?>' >> /var/www/html/info.php
 #Install Webmin
 echo "deb http://download.webmin.com/download/repository sarge contrib" >> /etc/apt/sources.list
-wget -q http://www.webmin.com/jcameron-key.asc -O- | sudo apt-key add -
+wget -q http://www.webmin.com/jcameron-key.asc -O- | apt-key add -
 apt-get --assume-yes update
 apt-get --assume-yes install webmin
 service webmin restart

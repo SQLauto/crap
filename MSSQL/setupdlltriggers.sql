@@ -57,7 +57,7 @@ SET @emailBody = + '--------------------------------' + CHAR(13)
                  + ISNULL(@objectType, 'No Type Given') + CHAR(13)
              + '-------------------------------------------';
  
-EXEC msdb..sp_send_dbmail @profile_name='Admin Profile', @recipients='jmallory@hsmove.com, @subject='DDL Alteration Trigger', @body=@emailBody
+EXEC msdb..sp_send_dbmail @profile_name='Default', @recipients='Jason.Mallory@iridium.com, @subject='DDL Alteration Trigger', @body=@emailBody
  
 GO
  

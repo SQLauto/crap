@@ -1,3 +1,5 @@
+Create Procedure DiskUsage
+AS
 WITH TMP AS
 (
 	SELECT
@@ -32,3 +34,4 @@ FROM
 GROUP BY
 	[Type],
 	[Drive Letter]
+	GO

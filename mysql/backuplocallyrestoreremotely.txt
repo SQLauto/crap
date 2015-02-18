@@ -1,0 +1,2 @@
+mysqldump -u root -ptmppassword database | mysql \
+-u root -ptmppassword --host=remote-server -C database

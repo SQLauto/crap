@@ -11,11 +11,11 @@ GO
 USE master;
 GO
 
-IF OBJECT_ID('dbo.sp_BlitzIndex') IS NOT NULL 
-	DROP PROCEDURE dbo.sp_BlitzIndex;
+IF OBJECT_ID('dbo.sp_CheckIndex') IS NOT NULL 
+	DROP PROCEDURE dbo.sp_CheckIndex;
 GO
 
-CREATE PROCEDURE dbo.sp_BlitzIndex
+CREATE PROCEDURE dbo.sp_CheckIndex
 	@DatabaseName NVARCHAR(128) = null, /*Defaults to current DB if not specified*/
 	@Mode tinyint=0, /*0=diagnose, 1=Summarize, 2=Index Usage Detail, 3=Missing Index Detail*/
 	@SchemaName NVARCHAR(128) = NULL, /*Requires table_name as well.*/
@@ -24,96 +24,20 @@ CREATE PROCEDURE dbo.sp_BlitzIndex
 	@Filter tinyint = 0 /* 0=no filter (default). 1=No low-usage warnings for objects with 0 reads. 2=Only warn for objects >= 500MB */
 		/*Note:@Filter doesn't do anything unless @Mode=0*/
 /*
-sp_BlitzIndex(TM) v2.02 - Jan 30, 2014
-
-(C) 2014, Brent Ozar Unlimited(TM). 
-See http://BrentOzar.com/go/eula for the End User Licensing Agreement.
-
-For help and how-to info, visit http://www.BrentOzar.com/BlitzIndex
 
 How to use:
 --	Diagnose:
-		EXEC dbo.sp_BlitzIndex @DatabaseName='AdventureWorks';
+		EXEC dbo.sp_CheckIndex @DatabaseName='AdventureWorks';
 --	Return detail for a specific table:
-		EXEC dbo.sp_BlitzIndex @DatabaseName='AdventureWorks', @SchemaName='Person', @TableName='Person';
+		EXEC dbo.sp_CheckIndex @DatabaseName='AdventureWorks', @SchemaName='Person', @TableName='Person';
 
 Known limitations of this version:
- - Does not include FULLTEXT indexes. (A possibility in the future, let us know if you're interested.)
+ - Does not include FULLTEXT indexes. 
  - Index create statements are just to give you a rough idea of the syntax. It includes filters and fillfactor.
  --		Example 1: index creates use ONLINE=? instead of ONLINE=ON / ONLINE=OFF. This is because it's important for the user to understand if it's going to be offline and not just run a script.
  --		Example 2: they do not include all the options the index may have been created with (padding, compression filegroup/partition scheme etc.)
  --		(The compression and filegroup index create syntax isn't trivial because it's set at the partition level and isn't trivial to code. Two people have voted for wanting it so far.)
  - Doesn't advise you about data modeling for clustered indexes and primary keys (primarily looks for signs of insanity.)
- - Found something? Let us know at help@brentozar.com.
-
- Thanks for using sp_BlitzIndex(TM)!
- Sincerely,
- The Humans of Brent Ozar Unlimited(TM)
-
-CHANGE LOG (last five versions):
-	Jan 30, 2014 (v2.02)
-		Standardized calling parameters with sp_AskBrent(TM) and sp_BlitzIndex(TM). (@DatabaseName instead of @database_name, etc)
-		Added check_id 80 and 81-- what appear to be the most frequently used indexes (workaholics)
-		Added index_operational_stats info to table level output -- recent scans vs lookups
-		Broke index_usage_stats output into two categories, scans and lookups (also in table level output)
-		Changed db name, table name, index name to 128 length
-		Fixed findings_group column length in #BlitzIndexResults (fixed issues for users w/ longer db names)
-		Fixed issue where identities nearing end of range were only detected if the check was run with a specific db context
-			Fixed extra tab in @SchemaName= that made pasting into Excel awkward/wrong
-		Added abnormal psychology check for clustered columnstore indexes (and general support for detecting them)
-		Standardized underscores in create TSQL for missing indexes
-		Better error message when running in table mode and the table isn't found.
-		Added current timestamp to the header based on user request. (Didn't add startup time-- sorry! Too many things reset usage info, don't want to mislead anyone.)
-		Added fillfactor to index create statements.
-		Changed all index create statements to ONLINE=?, SORT_IN_TEMPDB=?. The user should decide at index create time what's right for them.
-	May 26, 2013 (v2.01)
-		Added check_id 28: Non-unqiue clustered indexes. (This should have been checked in for an earlier version, it slipped by).
-	May 14, 2013 (v2.0) - Added data types and max length to all columns (keys, includes, secret columns)
-		Set sp_blitz to default to current DB if database_name is not specified when called
-		Added @Filter:  
-			0=no filter (default)
-			1=Don't throw low-usage warnings for objects with 0 reads (helpful for dev/non-production environments)
-			2=Only report on objects >= 250MB (helps focus on larger indexes). Still runs a few database-wide checks as well.
-		Added list of all columns and types in table for runs using: @DatabaseName, @SchemaName, @TableName
-		Added count of total number of indexes a column is part of.
-		Added check_id 25: Addicted to nullable columns. (All or all but one column is nullable.)
-		Added check_id 66 and 67 to flag tables/indexes created within 1 week or modified within 48 hours.
-		Added check_id 26: Wide tables (35+ cols or > 2000 non-LOB bytes).
-		Added check_id 27: Addicted to strings. Looks for tables with 4 or more columns, of which all or all but one are string or LOB types.
-		Added check_id 68: Identity columns within 30% of the end of range (tinyint, smallint, int) AND
-			Negative identity seeds or identity increments <> 1
-		Added check_id 69: Column collation does not match database collation
-		Added check_id 70: Replicated columns. This identifies which columns are in at least one replication publication.
-		Added check_id 71: Cascading updates or cascading deletes.
-		Split check_id 40 into two checks: fillfactor on nonclustered indexes < 80%, fillfactor on clustered indexes < 90%
-		Added check_id 33: Potential filtered indexes based on column names.
-		Fixed bug where you couldn't see detailed view for indexed views. 
-			(Ex: EXEC dbo.sp_BlitzIndex @DatabaseName='AdventureWorks', @SchemaName='Production', @TableName='vProductAndDescription';)
-		Added four index usage columns to table detail output: last_user_seek, last_user_scan, last_user_lookup, last_user_update
-		Modified check_id 24. This now looks for wide clustered indexes (> 3 columns OR > 16 bytes).
-			Previously just simplistically looked for multiple column CX.
-		Removed extra spacing (non-breaking) in more_info column.
-		Fixed bug where create t-sql didn't include filter (for filtered indexes)
-		Fixed formatting bug where "magic number" in table detail view didn't have commas
-		Neatened up column names in result sets.
-	April 8, 2013 (v1.5) - Fixed breaking bug for partitioned tables with > 10(ish) partitions
-		Added schema_name to suggested create statement for PKs
-		Handled "magic_benefit_number" values for missing indexes >= 922,337,203,685,477
-		Added count of NC indexes to Index Hoarder: Multi-column clustered index finding
-		Added link to EULA
-		Simplified aggressive index checks (blocking). Multiple checks confused people more than it helped.
-			Left only "Total lock wait time > 5 minutes (row + page)".
-		Added CheckId 25 for non-unique clustered indexes. 
-		The "Create TSQL" column now shows a commented out drop command for disabled non-clustered indexes
-		Updated query which joins to sys.dm_operational_stats DMV when running against 2012 for performance reasons
-	December 20, 2012 (v1.4) - Fixed bugs for instances using a case-sensitive collation
-		Added support to identify compressed indexes
-		Added basic support for columnstore, XML, and spatial indexes
-		Added "Abnormal Psychology" diagnosis to alert you to special index types in a database
-		Removed hypothetical indexes and disabled indexes from "multiple personality disorders"
-		Fixed bug where hypothetical indexes weren't showing up in "self-loathing indexes"
-		Fixed bug where the partitioning key column was displayed in the key of aligned nonclustered indexes on partitioned tables
-		Added set options to the script so procedure is created with required settings for its use of computed columns
 
 */
 AS 
